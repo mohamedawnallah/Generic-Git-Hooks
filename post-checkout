@@ -1,0 +1,37 @@
+#!/bin/sh
+
+branch_name=$(git rev-parse --abbrev-ref HEAD)
+
+function update_source_of_truth_branch() {
+    echo "Fast Forwarding Merge the latest changes from remote upstream/$branch_to_update branch into $branch_to_update branch..."
+
+    git fetch upstream "$branch_to_update":"$branch_to_update"
+
+    echo "Pushing the latest changes from $branch_to_update branch to remote $branch_to_update branch..."
+
+    git push origin "$branch_to_update"
+}
+
+function update_current_branch() {
+    echo "Rebasing $branch_name branch on top of $branch_to_update branch..."
+    git rebase "$branch_to_update"
+}
+
+if [[ $branch_name != "master" && $branch_name != "main" ]]; then
+
+    if [[ $(git show-ref --verify "refs/heads/master" 2>/dev/null) ]]; then
+        branch_to_update="master"
+    elif [[ $(git show-ref --verify "refs/heads/main" 2>/dev/null) ]]; then
+        branch_to_update="main"
+    else
+        echo "Neither 'master' nor 'main' branch exists." >&2
+        exit 1
+    fi
+
+    update_source_of_truth_branch
+
+    update_current_branch
+    
+    # Exit with the exit status of the last command executed
+    exit $?
+fi
