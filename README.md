@@ -13,7 +13,7 @@ These Git hooks are designed to streamline the contribution process by enforcing
 1. Clone this repository to your local machine:
 
     ```bash
-    git clone https://github.com/your-username/generic-git-hooks.git
+    git clone https://github.com/mohamedawnallah/generic-git-hooks.git
     ```
 
 2. Navigate to the cloned repository directory:
