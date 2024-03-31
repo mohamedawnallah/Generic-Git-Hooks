@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Function to check if a string exceeds a given length
+exceeds_length() {
+    local string="$1"
+    local max_length="$2"
+    if [[ ${#string} -gt $max_length ]]; then
+        return 0  # Return 0 if the string exceeds the maximum length
+    else
+        return 1  # Return 1 if the string does not exceed the maximum length
+    fi
+}
+
+# Function to check if the commit message matches the required format
+check_commit_message() {
+    local commit_msg_file="$1"
+    local commit_msg=$(head -n 1 "$commit_msg_file")
+    local max_first_line_length=50
+    local max_body_line_length=72
+
+    # Check if the first line of the commit message exceeds 50 characters
+    if exceeds_length "$commit_msg" "$max_first_line_length"; then
+        echo "The first line of the commit message must be 50 characters or less." >&2
+        exit 1
+    fi
+
+    # Check if any line in the commit message body exceeds 72 columns
+    local body_lines=$(tail -n +3 "$commit_msg_file")
+    while IFS= read -r line; do
+    	# Skip lines starting with #
+	if [[ $line =~ ^# ]]; then
+		continue 
+	fi
+
+        if exceeds_length "$line" "$max_body_line_length"; then
+            echo "Lines in the commit message body must not exceed 72 columns." >&2
+            exit 1
+        fi
+    done <<< "$body_lines"
+}
+
+# Run the commit message check only for non-merge commits.
+if ! git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+    check_commit_message "$1"
+
+    # Exit with the exit status of the last command executed
+    exit $?
+fi
